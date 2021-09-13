@@ -1,8 +1,11 @@
 #include <Windows.h>
+#include "Table.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR lpCmdLine, _In_ INT nCmdShow) {
+
+    Table::SetDataFromCSV("values.csv");
 
     const wchar_t className[] = L"MyWindowClass";
 
@@ -39,10 +42,48 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     return (int)msg.wParam;
 }
 
+void Paint(HWND hWnd) {
+    PAINTSTRUCT ps;
+    BeginPaint(hWnd, &ps);
+
+    RECT clientRect;
+    GetClientRect(hWnd, &clientRect);
+
+    HDC hBufferDC = CreateCompatibleDC(ps.hdc);
+    HBITMAP hBufferBitmap = CreateCompatibleBitmap(ps.hdc, clientRect.right, clientRect.bottom);
+    HGDIOBJ hOldBufferBitmap = SelectObject(hBufferDC, hBufferBitmap);
+
+    FillRect(hBufferDC, &clientRect, (HBRUSH)(COLOR_WINDOW + 1));
+
+    Table::Draw(hBufferDC, clientRect);
+
+    BitBlt(ps.hdc, 0, 0, clientRect.right, clientRect.bottom, hBufferDC, 0, 0, SRCCOPY);
+
+    SelectObject(hBufferDC, hOldBufferBitmap);
+    DeleteObject(hBufferDC);
+    DeleteObject(hBufferBitmap);
+
+    EndPaint(hWnd, &ps);
+}
+
+void Size(HWND hWnd) {
+    RECT clientRect;
+    GetClientRect(hWnd, &clientRect);
+    InvalidateRect(hWnd, &clientRect, false);
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_DESTROY:
         PostQuitMessage(0);
+        break;
+
+    case WM_PAINT:
+        Paint(hWnd);
+        break;
+
+    case WM_SIZE:
+        Size(hWnd);
         break;
 
     default:
