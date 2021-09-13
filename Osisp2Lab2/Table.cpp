@@ -33,9 +33,13 @@ void Table::SetDataFromCSV(const char* filePath) {
 }
 
 void Table::Draw(HDC hDC, RECT clientRect) {
-	const int horizontalPadding = 4;
-	const int separatorWidth = 1;
+	const int horizontalPadding = 6;
+	const int separatorWidth = 8;
 	const int lineSpacing = 2;
+
+	HPEN pen = CreatePen(PS_SOLID, separatorWidth, RGB(0, 0, 0));
+	HGDIOBJ oldPen = SelectObject(hDC, pen);
+
 
 	const float cellWidth = (float)(clientRect.right - separatorWidth) / _columnsCount;
 	const int cellAvalibleWidth = (int)cellWidth - horizontalPadding * 2 - separatorWidth;
@@ -45,6 +49,8 @@ void Table::Draw(HDC hDC, RECT clientRect) {
 
 	MoveToEx(hDC, 0, separatorWidth / 2, nullptr);
 	LineTo(hDC, clientRect.right, separatorWidth / 2);
+
+	float incrementX = cellAvalibleWidth + horizontalPadding + separatorWidth;
 
 	int tableHeight = separatorWidth;
 	for (int row = 0; row < _rowCount; row++) {
@@ -60,7 +66,7 @@ void Table::Draw(HDC hDC, RECT clientRect) {
 				GetTextExtentExPointA(hDC, pStr, _values[row][column].size() - fittedCharactersCount,
 					cellAvalibleWidth, &fittingCharactersCount, nullptr, &size);
 
-				if (fittingCharactersCount == 0) {
+				if (fittingCharactersCount <= 0) {
 					break;
 				}
 
@@ -70,7 +76,7 @@ void Table::Draw(HDC hDC, RECT clientRect) {
 				fittedCharactersCount += fittingCharactersCount;
 				columY += tm.tmHeight + lineSpacing;
 			}
-			columnX += cellWidth;
+			columnX += incrementX;
 
 			int curNextTableHeight = columY + lineSpacing + separatorWidth;
 			if (curNextTableHeight > nextTableHeight) {
@@ -86,14 +92,17 @@ void Table::Draw(HDC hDC, RECT clientRect) {
 		LineTo(hDC, clientRect.right, separatorY);
 	}
 
-	float increment = cellWidth - (float)separatorWidth / 2;
-	float separatorX = (float)separatorWidth / 2;
-	while (separatorX < clientRect.right - increment) {
-		MoveToEx(hDC, (int)separatorX, 0, nullptr);
-		LineTo(hDC, (int)separatorX, tableHeight);
-		separatorX += increment;
-	}
-	MoveToEx(hDC, clientRect.right - separatorWidth / 2 - 1, 0, nullptr);
-	LineTo(hDC, clientRect.right - separatorWidth / 2 - 1, tableHeight);
 	
+	float separatorX = (float)separatorWidth / 2;
+	while (separatorX < clientRect.right - incrementX) {
+		MoveToEx(hDC, (int)separatorX, 0, nullptr);
+		LineTo(hDC, (int)separatorX, tableHeight - separatorWidth);
+		separatorX += incrementX;
+	}
+	MoveToEx(hDC, clientRect.right - (separatorWidth - 1) / 2, 0, nullptr);
+	LineTo(hDC, clientRect.right - (separatorWidth - 1) / 2, tableHeight - separatorWidth);
+	
+
+	SelectObject(hDC, oldPen);
+	DeleteObject(pen);
 }

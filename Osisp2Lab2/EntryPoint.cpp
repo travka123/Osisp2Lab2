@@ -12,7 +12,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     WNDCLASSEX wcex;
 
     wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.style = CS_DBLCLKS;
+    wcex.style = CS_DBLCLKS | CS_HREDRAW;
     wcex.lpfnWndProc = WndProc;
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = 0;
@@ -66,12 +66,6 @@ void Paint(HWND hWnd) {
     EndPaint(hWnd, &ps);
 }
 
-void Size(HWND hWnd) {
-    RECT clientRect;
-    GetClientRect(hWnd, &clientRect);
-    InvalidateRect(hWnd, &clientRect, false);
-}
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_DESTROY:
@@ -81,11 +75,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     case WM_PAINT:
         Paint(hWnd);
         break;
-
-    case WM_SIZE:
-        Size(hWnd);
-        break;
-
+    
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
